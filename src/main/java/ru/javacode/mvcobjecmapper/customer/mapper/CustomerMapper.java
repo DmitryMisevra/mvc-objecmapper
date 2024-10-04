@@ -19,6 +19,7 @@ public class CustomerMapper {
 
     public CustomerDto customerToCustomerDto(Customer customer) {
         return CustomerDto.builder()
+                .customerId(customer.getCustomerId())
                 .firstName(customer.getFirstName())
                 .lastName(customer.getLastName())
                 .email(customer.getEmail())

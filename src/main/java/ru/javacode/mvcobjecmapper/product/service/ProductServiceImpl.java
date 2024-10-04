@@ -1,5 +1,6 @@
 package ru.javacode.mvcobjecmapper.product.service;
 
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,8 @@ import ru.javacode.mvcobjecmapper.product.dto.UpdateProductDto;
 import ru.javacode.mvcobjecmapper.product.mapper.ProductMapper;
 import ru.javacode.mvcobjecmapper.product.model.Product;
 import ru.javacode.mvcobjecmapper.product.repository.ProductRepository;
+import ru.javacode.mvcobjecmapper.util.JsonUtils;
+import ru.javacode.mvcobjecmapper.util.ValidationUtils;
 
 import java.util.List;
 
@@ -20,16 +23,22 @@ public class ProductServiceImpl implements ProductService {
 
     private final ProductRepository productRepository;
     private final ProductMapper productMapper;
+    private final Validator validator;
 
     @Override
-    public ProductDto createProduct(CreateProductDto createProductDto) {
+    public String createProduct(String createProductJson) {
+        CreateProductDto createProductDto = JsonUtils.fromJson(createProductJson, CreateProductDto.class);
+        ValidationUtils.validate(validator, createProductDto);
         Product product = productMapper.createProductDtoToProduct(createProductDto);
         Product savedProduct = productRepository.save(product);
-        return productMapper.productToProductDto(savedProduct);
+        ProductDto productDto = productMapper.productToProductDto(savedProduct);
+        return JsonUtils.toJson(productDto);
     }
 
     @Override
-    public ProductDto updateProduct(Long productId, UpdateProductDto updateProductDto) {
+    public String updateProduct(Long productId, String updateProductJson) {
+        UpdateProductDto updateProductDto = JsonUtils.fromJson(updateProductJson, UpdateProductDto.class);
+        ValidationUtils.validate(validator, updateProductDto);
         Product productToUpdate = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
                 "Товар с id " + productId + " не найден"));
         if (updateProductDto.getName() != null) {
@@ -48,15 +57,17 @@ public class ProductServiceImpl implements ProductService {
             productToUpdate.setQuantityInStock(updateProductDto.getQuantityInStock());
         }
         Product savedProduct = productRepository.save(productToUpdate);
-        return productMapper.productToProductDto(savedProduct);
+        ProductDto productDto = productMapper.productToProductDto(savedProduct);
+        return JsonUtils.toJson(productDto);
     }
 
     @Transactional(readOnly = true)
     @Override
-    public ProductDto getProductById(Long productId) {
+    public String getProductById(Long productId) {
         Product product = productRepository.findById(productId).orElseThrow(() -> new ResourceNotFoundException(
                 "Товар с id " + productId + " не найден"));
-        return productMapper.productToProductDto(product);
+        ProductDto productDto = productMapper.productToProductDto(product);
+        return JsonUtils.toJson(productDto);
     }
 
     @Override
@@ -66,9 +77,10 @@ public class ProductServiceImpl implements ProductService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<ProductDto> getProducts() {
-        return productRepository.findAll().stream()
+    public String getProducts() {
+        List<ProductDto> products = productRepository.findAll().stream()
                 .map(productMapper::productToProductDto)
                 .toList();
+        return JsonUtils.toJson(products);
     }
 }

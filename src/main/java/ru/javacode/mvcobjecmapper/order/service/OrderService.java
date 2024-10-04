@@ -1,21 +1,14 @@
 package ru.javacode.mvcobjecmapper.order.service;
 
-import ru.javacode.mvcobjecmapper.order.dto.CreateOrderDto;
-import ru.javacode.mvcobjecmapper.order.dto.OrderDtoFull;
-import ru.javacode.mvcobjecmapper.order.dto.OrderDtoShort;
-import ru.javacode.mvcobjecmapper.order.dto.UpdateOrderDto;
-
-import java.util.List;
-
 public interface OrderService {
 
-    OrderDtoFull createOrder(Long customerId, CreateOrderDto createOrderDto);
+    String createOrder(Long customerId, String createOrderJson);
 
-    OrderDtoFull getOrderById(Long orderId);
+    String getOrderById(Long orderId);
 
-    OrderDtoFull updateOrder(Long orderId, UpdateOrderDto updateOrderDto);
+    String updateOrder(Long orderId, String updateOrderJson);
 
     void deleteOrder(Long orderId);
 
-    List<OrderDtoShort> getAllOrders();
+    String getAllOrders();
 }

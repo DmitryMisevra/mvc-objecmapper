@@ -12,6 +12,7 @@ import ru.javacode.mvcobjecmapper.product.dto.ProductDto;
 import ru.javacode.mvcobjecmapper.product.mapper.ProductMapper;
 import ru.javacode.mvcobjecmapper.product.model.Product;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Component
@@ -32,6 +33,7 @@ public class OrderMapper {
     public OrderDtoShort orderToOrderDtoShort(Order order) {
         return OrderDtoShort.builder()
                 .orderId(order.getOrderId())
+                .orderDate(order.getOrderDate())
                 .shippingAddress(order.getShippingAddress())
                 .orderStatus(order.getOrderStatus())
                 .build();
@@ -41,6 +43,7 @@ public class OrderMapper {
         return OrderDtoFull.builder()
                 .orderId(order.getOrderId())
                 .customer(customerMapper.customerToCustomerDto(order.getCustomer()))
+                .orderDate(order.getOrderDate())
                 .shippingAddress(order.getShippingAddress())
                 .orderStatus(order.getOrderStatus())
                 .totalPrice(order.getTotalPrice())

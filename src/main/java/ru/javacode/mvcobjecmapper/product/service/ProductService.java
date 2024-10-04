@@ -1,20 +1,14 @@
 package ru.javacode.mvcobjecmapper.product.service;
 
-import ru.javacode.mvcobjecmapper.product.dto.CreateProductDto;
-import ru.javacode.mvcobjecmapper.product.dto.ProductDto;
-import ru.javacode.mvcobjecmapper.product.dto.UpdateProductDto;
-
-import java.util.List;
-
 public interface ProductService {
 
-    ProductDto createProduct(CreateProductDto createProductDto);
+    String createProduct(String createProductJson);
 
-    ProductDto updateProduct(Long productId, UpdateProductDto updateProductDto);
+    String updateProduct(Long productId, String updateProductJson);
 
-    ProductDto getProductById(Long productId);
+    String getProductById(Long productId);
 
     void deleteProduct(Long productId);
 
-    List<ProductDto> getProducts();
+    String getProducts();
 }

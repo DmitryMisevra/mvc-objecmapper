@@ -8,5 +8,5 @@ import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     @EntityGraph(attributePaths = {"customer", "products"})
-    Optional<Order> findWithAllDetailsById(Long id);
+    Optional<Order> findWithAllDetailsByOrderId(Long orderId);
 }

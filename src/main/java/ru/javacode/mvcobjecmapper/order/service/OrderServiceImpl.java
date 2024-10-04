@@ -1,5 +1,6 @@
 package ru.javacode.mvcobjecmapper.order.service;
 
+import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,10 @@ import ru.javacode.mvcobjecmapper.order.model.Order;
 import ru.javacode.mvcobjecmapper.order.repository.OrderRepository;
 import ru.javacode.mvcobjecmapper.product.model.Product;
 import ru.javacode.mvcobjecmapper.product.repository.ProductRepository;
+import ru.javacode.mvcobjecmapper.util.JsonUtils;
+import ru.javacode.mvcobjecmapper.util.ValidationUtils;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -27,9 +31,12 @@ public class OrderServiceImpl implements OrderService {
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
     private final OrderMapper orderMapper;
+    private final Validator validator;
 
     @Override
-    public OrderDtoFull createOrder(Long customerId, CreateOrderDto createOrderDto) {
+    public String createOrder(Long customerId, String createOrderJson) {
+        CreateOrderDto createOrderDto = JsonUtils.fromJson(createOrderJson, CreateOrderDto.class);
+        ValidationUtils.validate(validator, createOrderDto);
         Customer customer = customerRepository.findById(customerId).orElseThrow(() ->
                 new ResourceNotFoundException("Покупатель с id " + customerId + " не найден"));
         Order order = orderMapper.createsOrderDtoToOrder(createOrderDto);
@@ -41,15 +48,19 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public OrderDtoFull getOrderById(Long orderId) {
-        Order order = orderRepository.findWithAllDetailsById(orderId).orElseThrow(() ->
+    public String getOrderById(Long orderId) {
+        Order order = orderRepository.findWithAllDetailsByOrderId(orderId).orElseThrow(() ->
                 new ResourceNotFoundException("Заказ с id " + orderId + " не найден"));
-        return orderMapper.orderToOrderDtoFull(order);
+        order.setTotalPrice(calculateTotalPrice(order.getProducts()));
+        OrderDtoFull orderDtoFull = orderMapper.orderToOrderDtoFull(order);
+        return JsonUtils.toJson(orderDtoFull);
     }
 
     @Override
-    public OrderDtoFull updateOrder(Long orderId, UpdateOrderDto updateOrderDto) {
-        Order orderToUpdate = orderRepository.findWithAllDetailsById(orderId).orElseThrow(() ->
+    public String updateOrder(Long orderId, String updateOrderJson) {
+        UpdateOrderDto updateOrderDto = JsonUtils.fromJson(updateOrderJson, UpdateOrderDto.class);
+        ValidationUtils.validate(validator, updateOrderDto);
+        Order orderToUpdate = orderRepository.findWithAllDetailsByOrderId(orderId).orElseThrow(() ->
                 new ResourceNotFoundException("Заказ с id " + orderId + " не найден"));
         if (updateOrderDto.getShippingAddress() != null) {
             orderToUpdate.setShippingAddress(updateOrderDto.getShippingAddress());
@@ -73,17 +84,18 @@ public class OrderServiceImpl implements OrderService {
 
     @Transactional(readOnly = true)
     @Override
-    public List<OrderDtoShort> getAllOrders() {
-        return orderRepository.findAll().stream()
+    public String getAllOrders() {
+        List<OrderDtoShort> orderDtoShorts = orderRepository.findAll().stream()
                 .map(orderMapper::orderToOrderDtoShort)
                 .toList();
+        return JsonUtils.toJson(orderDtoShorts);
     }
 
     private List<Product> convertProductIdsToProducts(List<Long> productIds) {
         if (productIds == null || productIds.isEmpty()) {
             throw new IllegalArgumentException("Заказ не может быть пустым");
         }
-        List<Product> products = productRepository.findByIdIn(productIds);
+        List<Product> products = productRepository.findByProductIdIn(productIds);
         if (products.size() != productIds.size()) {
             List<Long> foundProductIds = products.stream()
                     .map(Product::getProductId)
@@ -96,5 +108,11 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Продукты с идентификаторами " + missingProductIds + " не найдены");
         }
         return products;
+    }
+
+    private BigDecimal calculateTotalPrice(List<Product> products) {
+        return products.stream()
+                .map(product -> product.getPrice().multiply(BigDecimal.valueOf(product.getQuantityInStock())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 }

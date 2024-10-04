@@ -1,20 +1,14 @@
 package ru.javacode.mvcobjecmapper.customer.service;
 
-import ru.javacode.mvcobjecmapper.customer.dto.CreateCustomerDto;
-import ru.javacode.mvcobjecmapper.customer.dto.CustomerDto;
-import ru.javacode.mvcobjecmapper.customer.dto.UpdateCustomerDto;
-
-import java.util.List;
-
 public interface CustomerService {
 
-    CustomerDto createCustomer(CreateCustomerDto createCustomerDto);
+    String createCustomer(String createCustomerJson);
 
-    CustomerDto updateCustomer(Long customerId, UpdateCustomerDto updateCustomerDto);
+    String updateCustomer(Long customerId, String updateCustomerJson);
 
-    CustomerDto getCustomerById(Long customerId);
+    String getCustomerById(Long customerId);
 
     void deleteCustomerById(Long customerId);
 
-    List<CustomerDto> getAllCustomers();
+    String getAllCustomers();
 }
